@@ -1,6 +1,10 @@
 
 local points={}
 
+if not love then
+  love = {}
+end
+
 function isClosed(points)
   local nb = #points
   return nb >=6 and points[1] == points[nb-1] and points[2] == points[nb]
@@ -13,13 +17,13 @@ function isConvex(points)
 
   local zsign = 0
   for i = 1,(#points-2),2 do
-    n = i
-    local p1 = {points[n], points[n+1]}
+    local n = i
+    local x1, y1 = points[n], points[n+1]
     n = n + 2 < #points and n + 2 or 3
-    local p2 = {points[n], points[n+1]}
+    local x2, y2 = points[n], points[n+1]
     n = n + 2 < #points and n + 2 or 3
-    local p3 = {points[n], points[n+1]}
-    local z = (p1[1] - p2[1]) * (p3[2] - p2[2]) - (p1[2] - p2[2]) * (p3[1] - p2[1])
+    local x3, y3 = points[n], points[n+1]
+    local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
     z = (z > 0 and 1) or (z < 0 and -1) or 0
     if zsign == 0 then
       zsign = z
@@ -61,4 +65,10 @@ function love.draw()
   elseif #points == 2 then
     love.graphics.point(points[1], points[2])
   end
+  
+  local msg = "None closed polygon"
+  if isClosed(points) then
+    msg = isConvex(points) and "Convex polygon" or "Concave polygon"
+  end
+  love.graphics.print(msg, 10, 10)
 end
