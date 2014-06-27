@@ -1,34 +1,6 @@
 
 local points={}
 
-local function parse_args(args)
-  local args_name = {}
-  for i, k in ipairs(args) do
-    if (k:match("^\\-\\-")) then
-      args_name[k] = args[i+1] or true
-    end
-  end
-  
-  if args_name["-h"] or args_name["--help"] then
-    print([[
-Options:
-  --cell-ratio     the maximum cells added at the beginning of the game
-  --cell-width     cell width in pixels
-  --cell-height    cell height in pixels
-  --speed          evolution speed (100 means one evolution per second)
-  --help or -h     this message
-    ]])
-    
-    os.exit()
-  end
-
-  cell_ratio = tonumber(args_name["--cell-ratio"]) or 33
-  cell_width = tonumber(args_name["--cell-width"]) or 15
-  cell_height = tonumber(args_name["--cell-height"]) or 15
-  speed = tonumber(args_name["--speed"]) or 100
-  
-end
-
 function love.load(args)
   love.graphics.setBackgroundColor(250,250,250)
   love.graphics.setColor(60,60,60)
