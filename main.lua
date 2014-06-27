@@ -24,10 +24,10 @@ function isConvex(points)
     n = n + 2 < #points and n + 2 or 3
     local x3, y3 = points[n], points[n+1]
     local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    z = (z > 0 and 1) or (z < 0 and -1) or 0
+
     if zsign == 0 then
       zsign = z
-    elseif z ~= 0 and z ~= zsign then
+    elseif zsign * z < 0 then
       return false
     end
   end
@@ -56,7 +56,13 @@ function love.keypressed(key, isrepeat)
   end
 end
 
+local msg = ""
+
 function love.update(dt)
+  msg = "None closed polygon (right click to close)"
+  if isClosed(points) then
+    msg = isConvex(points) and "Convex polygon" or "Concave polygon"
+  end
 end
 
 function love.draw()
@@ -64,11 +70,6 @@ function love.draw()
     love.graphics.line(points)
   elseif #points == 2 then
     love.graphics.point(points[1], points[2])
-  end
-  
-  local msg = "None closed polygon"
-  if isClosed(points) then
-    msg = isConvex(points) and "Convex polygon" or "Concave polygon"
   end
   love.graphics.print(msg, 10, 10)
 end
