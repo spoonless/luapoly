@@ -44,4 +44,24 @@ function TestPoly:test_is_not_convex()
   assert(not poly:is_convex())
 end
 
+function TestPoly:test_is_cw()
+  poly = new_poly();
+  poly:push_coord(0,0)
+  poly:push_coord(1,1)
+  poly:push_coord(1,0)
+  poly:close()
+  
+  assert(poly:is_cw())
+end
+
+function TestPoly:test_is_ccw()
+  poly = new_poly();
+  poly:push_coord(0,0)
+  poly:push_coord(1,0)
+  poly:push_coord(1,1)
+  poly:close()
+  
+  assert(not poly:is_cw())
+end
+
 LuaUnit:run()

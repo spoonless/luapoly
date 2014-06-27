@@ -9,7 +9,7 @@ function love.load(args)
 end
 
 function love.mousepressed(x, y, button)
-  if button == 'l' then
+  if button == 'l' and not poly:is_closed() then
     poly:push_coord(x, y)
   elseif button == 'r' then
     poly:close();
@@ -17,7 +17,7 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key, isrepeat)
-  if (key == "backspace" or key == "delete") then
+  if key == "backspace" or key == "delete" then
      poly:pop_coord()
   end
 end
@@ -29,6 +29,7 @@ function love.update(dt)
     msg = "Add points (left click)"
   elseif poly:is_closed() then
     msg = poly:is_convex() and "Convex polygon" or "Concave polygon"
+    msg = msg .. (poly:is_cw() and " (clockwise)" or " (counterclockwise)")
   else
     msg = "Add points (left click) or close the polygon (right click to close)"
   end

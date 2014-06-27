@@ -32,6 +32,23 @@ function PolyMetaTable.is_convex(poly)
   return true
 end
 
+function PolyMetaTable.is_cw(poly)
+  if not poly:is_closed() then
+    return false
+  end
+
+  local sum = 0
+  for i = 1,(#poly-2),2 do
+    local n = i
+    local x1, y1 = poly[n], poly[n+1]
+    n = n + 2
+    local x2, y2 = poly[n], poly[n+1]
+
+    sum = sum + (x2 - x1) * (y2 + y1)
+  end
+  return sum >= 0
+end
+
 function PolyMetaTable.get_coord_count(poly)
   return #poly / 2
 end
