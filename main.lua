@@ -1,6 +1,35 @@
 
 local points={}
 
+function isClosed(points)
+  local nb = #points
+  return nb >=6 and points[1] == points[nb-1] and points[2] == points[nb]
+end
+
+function isConvex(points)
+  if not isClosed(points) then
+    return false
+  end
+
+  local zsign = 0
+  for i = 1,(#points-2),2 do
+    n = i
+    local p1 = {points[n], points[n+1]}
+    n = n + 2 < #points and n + 2 or 3
+    local p2 = {points[n], points[n+1]}
+    n = n + 2 < #points and n + 2 or 3
+    local p3 = {points[n], points[n+1]}
+    local z = (p1[1] - p2[1]) * (p3[2] - p2[2]) - (p1[2] - p2[2]) * (p3[1] - p2[1])
+    z = (z > 0 and 1) or (z < 0 and -1) or 0
+    if zsign == 0 then
+      zsign = z
+    elseif z ~= 0 and z ~= zsign then
+      return false
+    end
+  end
+  return true
+end
+
 function love.load(args)
   love.graphics.setBackgroundColor(250,250,250)
   love.graphics.setColor(60,60,60)
@@ -18,8 +47,8 @@ end
 
 function love.keypressed(key, isrepeat)
   if (key == "backspace" or key == "delete") and #points >= 2 then
-    points[#points] = nil
-    points[#points] = nil
+    table.remove(points)
+    table.remove(points)
   end
 end
 
