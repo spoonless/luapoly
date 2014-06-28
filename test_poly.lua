@@ -14,7 +14,7 @@ function TestPoly:test_close_poly()
 
   poly:close()
   assert(poly:is_closed())
-  assert_equals(poly:get_coord(1), poly:get_coord(4))
+  assert_equals(poly:get_coord(4), poly:get_coord(1))
 end
 
 function TestPoly:test_is_convex()
@@ -62,6 +62,36 @@ function TestPoly:test_is_ccw()
   poly:close()
   
   assert(not poly:is_cw())
+end
+
+function TestPoly:test_get_convex()
+  poly = new_poly();
+  poly:push_coord(0,0)
+  poly:push_coord(1,1)
+  poly:push_coord(1,0)
+  poly:close()
+  
+  assert_equals(poly:get_convex(), poly)
+end
+
+function TestPoly:test_get_convex_from_concave()
+  poly = new_poly();
+  poly:push_coord(0,0)
+  poly:push_coord(1,1)
+  poly:push_coord(1,0)
+  poly:push_coord(0.6,0.5)
+  poly:close()
+  
+  assert_equals(poly:get_convex(), {1, 1, 1, 0, 0.6, 0.5})
+end
+
+function TestPoly:test_cant_get_convex()
+  poly = new_poly();
+  poly:push_coord(0,0)
+  poly:push_coord(1,1)
+  poly:push_coord(1,0)
+  
+  assert_equals(poly:get_convex(), nil)
 end
 
 LuaUnit:run()

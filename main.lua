@@ -38,6 +38,13 @@ end
 function love.draw()
   local nb_coord = poly:get_coord_count()
   if nb_coord > 1 then
+    local convexPoly = poly:get_convex()
+    if convexPoly then
+      local color = {love.graphics.getColor()}
+      love.graphics.setColor(100, 120, 100, 30)
+      love.graphics.polygon("fill", convexPoly)
+      love.graphics.setColor(color)
+    end
     love.graphics.line(poly)
   elseif nb_coord == 1 then
     love.graphics.point(poly:get_coord(1))
