@@ -53,13 +53,9 @@ function PolyMetaTable.get_convex(poly)
   if not poly:is_closed() then
     return nil
   end
-  
-  local sign = poly:is_cw() and 1 or -1
-  
-  local convexPoly = nil
-  local v = nil
-  local v_index = 0
-  
+
+  local polySurface = 0
+  local angleSigns = {0}
   for i = 1,(#poly-3),2 do
     local n = i
     local x1, y1 = poly[n], poly[n+1]
@@ -69,38 +65,55 @@ function PolyMetaTable.get_convex(poly)
     local x3, y3 = poly[n], poly[n+1]
     -- dot product of the z component
     local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    
-    if z * sign < 0 then
-      convexPoly = {x2, y2}
-      v = {(x1 - x2), (y1 - y2)}
-      v_index = i+2
+    table.insert(angleSigns, z)
+    polySurface = polySurface + (x2 - x1) * (y2 + y1)
+  end
+  angleSigns[1] = angleSigns[#angleSigns]
+  table.remove(angleSigns)
+  
+  local sign = polySurface < 0 and -1 or 1
+  
+  local pivot = nil
+  for i,s in pairs(angleSigns) do
+    if s * sign < 0 then
+      pivot = i
       break
     end
   end
-  
-  if not convexPoly then
+
+  if pivot == nil then
     return poly
   end
   
-  local i = v_index-2 > 0 and v_index-2 or #poly-3
-  local x2, y2 = convexPoly[#convexPoly-1], convexPoly[#convexPoly]
-  while true do
-    local x3, y3 = poly[i], poly[i+1]
-    
+  local j = pivot-1 > 0 and pivot-1 or #angleSigns
+  local convex_poly = {pivot, j}
+
+  local x2, y2 = poly:get_coord(pivot)
+  local x1, y1 = poly:get_coord(j)
+
+  while j~=pivot do
+    j = j-1 > 0 and j-1 or #angleSigns
+    local x3, y3 = poly:get_coord(j)
     -- dot product of the z component
-    local z = v[1] * (y3 - y2) - v[2] * (x3 - x2)
+    -- print ("(x1=" .. x1 .. ", y1=" .. y1 .. ")," .. "(x2=" .. x2 .. ", y2=" .. y2 .. ")," .. "(x3=" .. x3 .. ", y3=" .. y3 .. ")")
+    local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
     if z * sign < 0 then
       break
     end
-
-    table.insert(convexPoly, 1, y3)
-    table.insert(convexPoly, 1, x3)
-    i = i-2 > 0 and i-2 or #poly-3
+    if angleSigns[j] * sign < 0 then
+      break
+    end
+    table.insert(convex_poly, j);
   end
-  
-  setmetatable(convexPoly, PolyMetaTable)
-  
-  return convexPoly  
+
+  local result = {}
+  setmetatable(result, PolyMetaTable)
+  for _, i in pairs(convex_poly) do
+    result:push_coord(poly:get_coord(i))
+  end
+  result:close()
+  return result
+
 end
 
 function PolyMetaTable.get_coord_count(poly)
