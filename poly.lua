@@ -1,6 +1,13 @@
 local PolyMetaTable = {}
 PolyMetaTable.__index = PolyMetaTable;
 
+function PolyMetaTable.clone(poly)
+  local target = {}
+  for k, v in pairs(poly) do target[k] = v end
+  setmetatable(target, getmetatable(poly))
+  return target
+end
+
 function PolyMetaTable.is_closed(poly)
   local nb = #poly
   return nb >=6 and poly[1] == poly[nb-1] and poly[2] == poly[nb]
@@ -13,15 +20,9 @@ function PolyMetaTable.is_convex(poly)
   end
 
   local zsign = 0
-  for i = 1,(#poly-3),2 do
-    local n = i
-    local x1, y1 = poly[n], poly[n+1]
-    n = n + 2
-    local x2, y2 = poly[n], poly[n+1]
-    n = n + 2 < #poly and n + 2 or 3
-    local x3, y3 = poly[n], poly[n+1]
+  for i = 1,(poly:get_coord_count()-1) do
     -- dot product of the z component
-    local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
+    local z = poly:compute_zcross_product(i, i+1, i+2)
 
     if zsign == 0 then
       zsign = z
@@ -38,22 +39,33 @@ function PolyMetaTable.is_cw(poly)
   end
 
   local sum = 0
-  for i = 1,(#poly-3),2 do
-    local n = i
-    local x1, y1 = poly[n], poly[n+1]
-    n = n + 2
-    local x2, y2 = poly[n], poly[n+1]
+  for i = 1,(poly:get_coord_count()-1) do
+    local x1, y1 = poly:get_coord(i)
+    local x2, y2 = poly:get_coord(i+1)
 
     sum = sum + (x2 - x1) * (y2 + y1)
   end
   return sum >= 0
 end
 
+function PolyMetaTable.compute_zcross_product(poly, i1, i2, i3)
+  local coord_count = poly:get_coord_count() - 1
+  i1 = i1 > coord_count  and i1 - coord_count or i1
+  i2 = i2 > coord_count  and i2 - coord_count or i2
+  i3 = i3 > coord_count  and i3 - coord_count or i3
+  
+  local x1, y1 = poly:get_coord(i1)
+  local x2, y2 = poly:get_coord(i2)
+  local x3, y3 = poly:get_coord(i3)
+  
+  return (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
+end
+
 function PolyMetaTable.get_convex(poly)
   if not poly:is_closed() then
     return nil
   end
-
+  
   local polySurface = 0
   local angleSigns = {0}
   for i = 1,(#poly-3),2 do
@@ -105,6 +117,9 @@ function PolyMetaTable.get_convex(poly)
     end
     table.insert(convex_poly, j);
   end
+  
+  -- supprimer les sommets de j+1 à pivot (non inclus) et recommencer l'opération
+  
 
   local result = {}
   setmetatable(result, PolyMetaTable)
