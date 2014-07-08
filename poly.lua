@@ -85,50 +85,47 @@ function PolyMetaTable.get_convex(poly)
   
   local sign = polySurface < 0 and -1 or 1
   
-  local pivot = nil
+  local starting_point = nil
   for i,s in pairs(angleSigns) do
     if s * sign < 0 then
-      pivot = i
+      starting_point = i
       break
     end
   end
 
-  if pivot == nil then
+  if starting_point == nil then
     return poly
   end
   
-  local j = pivot-1 > 0 and pivot-1 or #angleSigns
-  local convex_poly = {pivot, j}
-
-  local x2, y2 = poly:get_coord(pivot)
-  local x1, y1 = poly:get_coord(j)
+  local j = starting_point
+  j = (j % #angleSigns) + 1
+  
+  local x2, y2 = poly:get_coord(starting_point)
+  local x3, y3 = poly:get_coord(j)
+  local convex_poly = {x2,y2,x3,y3}
 
   while j~=pivot do
-    j = j-1 > 0 and j-1 or #angleSigns
-    local x3, y3 = poly:get_coord(j)
+    j = (j % #angleSigns) + 1
+    local x1, y1 = poly:get_coord(j)
+    
     -- dot product of the z component
     -- print ("(x1=" .. x1 .. ", y1=" .. y1 .. ")," .. "(x2=" .. x2 .. ", y2=" .. y2 .. ")," .. "(x3=" .. x3 .. ", y3=" .. y3 .. ")")
     local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    if z * sign < 0 then
+    -- print ("z=" .. z)
+    if z * sign >= 0 then
+      table.insert(convex_poly, x1)
+      table.insert(convex_poly, y1)
+    else
       break
     end
     if angleSigns[j] * sign < 0 then
       break
     end
-    table.insert(convex_poly, j);
   end
-  
-  -- supprimer les sommets de j+1 à pivot (non inclus) et recommencer l'opération
-  
 
-  local result = {}
-  setmetatable(result, PolyMetaTable)
-  for _, i in pairs(convex_poly) do
-    result:push_coord(poly:get_coord(i))
-  end
-  result:close()
-  return result
-
+  setmetatable(convex_poly, PolyMetaTable)
+  convex_poly:close()
+  return convex_poly:is_closed() and convex_poly or nil
 end
 
 function PolyMetaTable.get_coord_count(poly)

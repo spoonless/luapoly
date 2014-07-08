@@ -82,7 +82,7 @@ function TestPoly:test_get_convex_from_concave()
   poly:push_coord(0.6,0.5)
   poly:close()
   
-  assert_equals(poly:get_convex(), {0.6, 0.5, 1, 0, 1, 1, 0.6, 0.5})
+  assert_equals(poly:get_convex(), {0.6, 0.5, 0, 0, 1, 1, 0.6, 0.5})
 end
 
 function TestPoly:test_cant_get_convex()
