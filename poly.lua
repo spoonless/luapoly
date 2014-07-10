@@ -1,3 +1,7 @@
+local function normalize_index(index, max_index)
+  return (index + max_index - 1) % max_index + 1
+end
+
 local PolyMetaTable = {}
 PolyMetaTable.__index = PolyMetaTable;
 
@@ -50,16 +54,89 @@ end
 
 function PolyMetaTable.compute_zcross_product(poly, i1, i2, i3)
   local coord_count = poly:get_coord_count() - 1
-  i1 = i1 > coord_count  and i1 - coord_count or i1
-  i2 = i2 > coord_count  and i2 - coord_count or i2
-  i3 = i3 > coord_count  and i3 - coord_count or i3
+  
+  i1 = (i1 + coord_count - 1) % coord_count + 1
+  i2 = (i2 + coord_count - 1) % coord_count + 1
+  i3 = (i3 + coord_count - 1) % coord_count + 1
   
   local x1, y1 = poly:get_coord(i1)
   local x2, y2 = poly:get_coord(i2)
   local x3, y3 = poly:get_coord(i3)
-  
+
   return (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
 end
+
+function PolyMetaTable.compute_subsurface(poly, i1, i2)
+  local coord_count = poly:get_coord_count() - 1
+  i1 = i1 > coord_count  and i1 - coord_count or i1
+  i2 = i2 > coord_count  and i2 - coord_count or i2
+  
+  local x1, y1 = poly:get_coord(i1)
+  local x2, y2 = poly:get_coord(i2)
+  
+  return (x2 - x1) * (y2 + y1)
+end
+
+function PolyMetaTable.get_triangles(poly)
+  if not poly:is_closed() then
+    return nil
+  end
+  
+  local polySurface = 0
+  local reflex_vertices = {}
+  local convex_vertices = {}
+  local coord_count = poly:get_coord_count() - 1
+  for i = 1,coord_count do
+    -- dot product of the z component
+    local z = poly:compute_zcross_product(i, i+1, i+2)
+
+    if z < 0 then
+      reflex_vertices[i % coord_count +1] = true
+    else
+      convex_vertices[i % coord_count +1] = true
+    end
+    polySurface = polySurface + poly:compute_subsurface(i, i+1)
+  end
+  
+  local sign = polySurface < 0 and -1 or 1
+  
+  -- is it ok if sign == 0 for a given reflex vertex ?
+  if sign < 0 then
+    reflex_vertices, convex_vertices = convex_vertices, reflex_vertices
+  end
+  
+  triangles_vertices = {}
+
+  local ear_tips = {}
+  for i,_ in pairs(convex_vertices) do
+    local is_ear = true
+    for j,_ in pairs(reflex_vertices) do
+      -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
+      -- check j is not inside the triangle (i-1, i, i+1)
+      -- to be checked
+      if sign * poly:compute_zcross_product(j, i, i+1) > 0
+         and sign * poly:compute_zcross_product(j, i+1, i-1) > 0
+         and sign * poly:compute_zcross_product(j, i-1, i) > 0 then
+         is_ear = false
+         break;
+      end
+    end
+    if is_ear then
+      table.insert(ear_tips, i)
+    end
+  end
+  
+  if ear_tips[1] then
+    table.insert(triangles_vertices, ear_tips[1]-1)
+    table.insert(triangles_vertices, ear_tips[1])
+    table.insert(triangles_vertices, ear_tips[1]+1)
+  end
+  
+  print("ear_tips={"..table.concat(ear_tips, ",").."}")
+  print("triangles_vertices={"..table.concat(triangles_vertices, ",").."}")
+
+end
+
 
 function PolyMetaTable.get_convex(poly)
   if not poly:is_closed() then
