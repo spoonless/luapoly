@@ -51,10 +51,9 @@ function love.draw()
   if shape.triangles then
     local color = {love.graphics.getColor()}
     local color_index=1
-    for i = 1,#shape.triangles do
+    for _,triangle in ipairs(shape.triangles) do
       love.graphics.setColor(color_components[color_index], color_components[color_index+1], color_components[color_index+2], 150)
       color_index = color_index + 1
-      local triangle = shape.triangles[i]
       local x1, y1 = shape.poly:get_coord(triangle[1])
       local x2, y2 = shape.poly:get_coord(triangle[2])
       local x3, y3 = shape.poly:get_coord(triangle[3])
