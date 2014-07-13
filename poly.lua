@@ -126,8 +126,8 @@ function PolyMetaTable.get_triangles(poly)
   
   local polySurface = 0
   local poly_index = PolyIndex.new(poly:get_coord_count() -1)
-  local reflex_vertices = to_circular_array({})
-  local convex_vertices = to_circular_array({})
+  local reflex_vertices = {}
+  local convex_vertices = {}
   local coord_count = poly:get_coord_count() - 1
   for i = 1,coord_count do
     -- dot product of the z component
