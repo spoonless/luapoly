@@ -6,11 +6,11 @@ PolyIndex = {}
 PolyIndex.__index = PolyIndex
 
 function PolyIndex:previous(index)
-  return self.previous_index[index] or normalize_index(index-1, self.init_size)
+  return self.previous_index[index] or normalize_index(index-1, self.chain_size)
 end
 
 function PolyIndex:next(index)
-  return self.next_index[index] or normalize_index(index+1, self.init_size)
+  return self.next_index[index] or normalize_index(index+1, self.chain_size)
 end
 
 function PolyIndex:remove(index)
@@ -20,11 +20,10 @@ function PolyIndex:remove(index)
   self.previous_index[n] = p
   self.next_index[index] = nil
   self.previous_index[index] = nil
-  self.current_size = self.current_size - 1
 end
 
-function PolyIndex.new(init_size)
-  local poly_index = {init_size = init_size, current_size = init_size, previous_index = {}, next_index = {}}
+function PolyIndex.new(chain_size)
+  local poly_index = {chain_size = chain_size, previous_index = {}, next_index = {}}
   return setmetatable(poly_index, PolyIndex)
 end
 
@@ -152,9 +151,9 @@ function PolyMetaTable.get_triangles(poly)
     end
   end
   
-  triangles_vertices = {}
+  triangles = {}
 
-  while poly_index.current_size > 2 and ear_tips[1] do
+  while #triangles < coord_count - 2 do
     local ear_index = ear_tips[1]
     table.remove(ear_tips, 1)
     convex_vertices[ear_index] = nil
@@ -162,9 +161,7 @@ function PolyMetaTable.get_triangles(poly)
     local previous_ear_index = poly_index:previous(ear_index)
     local next_ear_index = poly_index:next(ear_index)
     
-    table.insert(triangles_vertices, previous_ear_index)
-    table.insert(triangles_vertices, ear_index)
-    table.insert(triangles_vertices, next_ear_index)
+    table.insert(triangles, {previous_ear_index, ear_index, next_ear_index})
     
     poly_index:remove(ear_index)
     
@@ -209,7 +206,7 @@ function PolyMetaTable.get_triangles(poly)
       end
     end
   end
-  return triangles_vertices
+  return triangles
 end
 
 function PolyMetaTable.get_coord_count(poly)
