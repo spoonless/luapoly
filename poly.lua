@@ -1,9 +1,51 @@
 local function normalize_index(index, max_index)
-  return (index + max_index - 1) % max_index + 1
+  return (index - 1) % max_index + 1
+end
+
+PolyIndex = {}
+PolyIndex.__index = PolyIndex
+
+function PolyIndex:previous(index)
+  return self.previous_index[index] or normalize_index(index-1, self.init_size)
+end
+
+function PolyIndex:next(index)
+  return self.next_index[index] or normalize_index(index+1, self.init_size)
+end
+
+function PolyIndex:remove(index)
+  local n = self:next(index)
+  local p = self:previous(index)
+  self.next_index[p] = n
+  self.previous_index[n] = p
+  self.next_index[index] = nil
+  self.previous_index[index] = nil
+  self.current_size = self.current_size - 1
+end
+
+function PolyIndex.new(init_size)
+  local poly_index = {init_size = init_size, current_size = init_size, previous_index = {}, next_index = {}}
+  return setmetatable(poly_index, PolyIndex)
+end
+
+local CircularArray = {}
+
+function CircularArray.__index (array, key)
+  if type(key) == "number" then
+    local length = #array
+    return rawget(array,  normalize_index(key, length))
+  else
+    return rawget(array, key)
+  end
+end
+
+function to_circular_array(a)
+  assert(type(a) == "table", "table expected")
+  return setmetatable(a, CircularArray)
 end
 
 local PolyMetaTable = {}
-PolyMetaTable.__index = PolyMetaTable;
+PolyMetaTable.__index = PolyMetaTable
 
 function PolyMetaTable.clone(poly)
   local target = {}
@@ -55,9 +97,9 @@ end
 function PolyMetaTable.compute_zcross_product(poly, i1, i2, i3)
   local coord_count = poly:get_coord_count() - 1
   
-  i1 = (i1 + coord_count - 1) % coord_count + 1
-  i2 = (i2 + coord_count - 1) % coord_count + 1
-  i3 = (i3 + coord_count - 1) % coord_count + 1
+  i1 = normalize_index(i1, coord_count)
+  i2 = normalize_index(i2, coord_count)
+  i3 = normalize_index(i3, coord_count)
   
   local x1, y1 = poly:get_coord(i1)
   local x2, y2 = poly:get_coord(i2)
@@ -68,8 +110,8 @@ end
 
 function PolyMetaTable.compute_subsurface(poly, i1, i2)
   local coord_count = poly:get_coord_count() - 1
-  i1 = i1 > coord_count  and i1 - coord_count or i1
-  i2 = i2 > coord_count  and i2 - coord_count or i2
+  i1 = normalize_index(i1, coord_count)
+  i2 = normalize_index(i2, coord_count)
   
   local x1, y1 = poly:get_coord(i1)
   local x2, y2 = poly:get_coord(i2)
@@ -83,17 +125,17 @@ function PolyMetaTable.get_triangles(poly)
   end
   
   local polySurface = 0
-  local reflex_vertices = {}
-  local convex_vertices = {}
+  local poly_index = PolyIndex.new(poly:get_coord_count() -1)
+  local reflex_vertices = to_circular_array({})
+  local convex_vertices = to_circular_array({})
   local coord_count = poly:get_coord_count() - 1
   for i = 1,coord_count do
     -- dot product of the z component
     local z = poly:compute_zcross_product(i, i+1, i+2)
-
     if z < 0 then
-      reflex_vertices[i % coord_count +1] = true
+      reflex_vertices[normalize_index(i+1, coord_count)] = true
     else
-      convex_vertices[i % coord_count +1] = true
+      convex_vertices[normalize_index(i+1, coord_count)] = true
     end
     polySurface = polySurface + poly:compute_subsurface(i, i+1)
   end
@@ -105,8 +147,6 @@ function PolyMetaTable.get_triangles(poly)
     reflex_vertices, convex_vertices = convex_vertices, reflex_vertices
   end
   
-  triangles_vertices = {}
-
   local ear_tips = {}
   for i,_ in pairs(convex_vertices) do
     local is_ear = true
@@ -114,9 +154,11 @@ function PolyMetaTable.get_triangles(poly)
       -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
       -- check j is not inside the triangle (i-1, i, i+1)
       -- to be checked
-      if sign * poly:compute_zcross_product(j, i, i+1) > 0
-         and sign * poly:compute_zcross_product(j, i+1, i-1) > 0
-         and sign * poly:compute_zcross_product(j, i-1, i) > 0 then
+      local next_i = poly_index:next(i)
+      local previous_i = poly_index:previous(i)
+      if sign * poly:compute_zcross_product(j, i, next_i) > 0
+         and sign * poly:compute_zcross_product(j, next_i, previous_i) > 0
+         and sign * poly:compute_zcross_product(j, previous_i, i) > 0 then
          is_ear = false
          break;
       end
@@ -126,15 +168,64 @@ function PolyMetaTable.get_triangles(poly)
     end
   end
   
-  if ear_tips[1] then
-    table.insert(triangles_vertices, ear_tips[1]-1)
-    table.insert(triangles_vertices, ear_tips[1])
-    table.insert(triangles_vertices, ear_tips[1]+1)
-  end
-  
-  print("ear_tips={"..table.concat(ear_tips, ",").."}")
-  print("triangles_vertices={"..table.concat(triangles_vertices, ",").."}")
+  triangles_vertices = {}
 
+  while poly_index.current_size > 2 and ear_tips[1] do
+    local ear_index = ear_tips[1]
+    table.remove(ear_tips, 1)
+    convex_vertices[ear_index] = nil
+    
+    local previous_ear_index = poly_index:previous(ear_index)
+    local next_ear_index = poly_index:next(ear_index)
+    
+    table.insert(triangles_vertices, previous_ear_index)
+    table.insert(triangles_vertices, ear_index)
+    table.insert(triangles_vertices, next_ear_index)
+    
+    poly_index:remove(ear_index)
+    
+    for _,index in ipairs{previous_ear_index, next_ear_index} do
+      local previous_index = poly_index:previous(index)
+      local next_index = poly_index:next(index)
+      if reflex_vertices[index] 
+        and sign * poly:compute_zcross_product(previous_index, index, next_index) >= 0 then
+        reflex_vertices[index] = nil
+        convex_vertices[index] = true
+      end
+      if convex_vertices[index] then
+        local is_ear = true
+        for j,_ in pairs(reflex_vertices) do
+          -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
+          -- check j is not inside the triangle (i-1, i, i+1)
+          -- to be checked
+          local next_i = poly_index:next(index)
+          local previous_i = poly_index:previous(index)
+          if sign * poly:compute_zcross_product(j, index, next_i) > 0
+            and sign * poly:compute_zcross_product(j, next_i, previous_i) > 0
+            and sign * poly:compute_zcross_product(j, previous_i, index) > 0 then
+            is_ear = false
+            break;
+          end
+        end
+        if is_ear then
+          if index == previous_ear_index then
+            table.insert(ear_tips, 1, index)
+          else
+            table.insert(ear_tips, index)
+          end
+        else
+          -- remove ear if no more an ear
+          for i,j in pairs(ear_tips) do
+            if j == index then
+              table.remove(ear_tips, i)
+              break
+            end
+          end
+        end
+      end
+    end
+  end
+  return triangles_vertices
 end
 
 
@@ -186,9 +277,7 @@ function PolyMetaTable.get_convex(poly)
     local x1, y1 = poly:get_coord(j)
     
     -- dot product of the z component
-    -- print ("(x1=" .. x1 .. ", y1=" .. y1 .. ")," .. "(x2=" .. x2 .. ", y2=" .. y2 .. ")," .. "(x3=" .. x3 .. ", y3=" .. y3 .. ")")
     local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    -- print ("z=" .. z)
     if z * sign >= 0 then
       table.insert(convex_poly, x1)
       table.insert(convex_poly, y1)
