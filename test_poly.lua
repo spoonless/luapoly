@@ -64,36 +64,6 @@ function TestPoly:test_is_ccw()
   assert(not poly:is_cw())
 end
 
-function TestPoly:test_get_convex()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
-  poly:close()
-  
-  assert_equals(poly:get_convex(), poly)
-end
-
-function TestPoly:test_get_convex_from_concave()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
-  poly:push_coord(0.6,0.5)
-  poly:close()
-  
-  assert_equals(poly:get_convex(), {0.6, 0.5, 0, 0, 1, 1, 0.6, 0.5})
-end
-
-function TestPoly:test_cant_get_convex()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
-  
-  assert_equals(poly:get_convex(), nil)
-end
-
 function TestPoly:test_get_triangles_when_poly_is_triangle()
   poly = new_poly();
   poly:push_coord(0,0)
@@ -143,20 +113,6 @@ function TestPoly:test_get_triangles_when_poly_is_star()
   
   local triangles = poly:get_triangles()
   assert_equals(triangles, {3,4,5,2,3,5,1,2,5,8,1,5,7,8,5,6,7,5})
-end
-
-TestCircularArray = {}
-
-function TestCircularArray:test_circular_array()
-  local a = {1,2,3}
-  a = to_circular_array(a)
-  
-  assert_equals({1,2,3}, a)
-  assert_equals(1, a[1])
-  assert_equals(3, a[0])
-  assert_equals(2, a[-1])
-  assert_equals(1, a[4])
-  assert_equals(3, a[-9])
 end
 
 TestPolyIndex = {}

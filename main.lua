@@ -1,7 +1,11 @@
+require "circular_table"
+local new_poly = require "poly"
 
-new_poly = require "poly"
+local msg = ""
 
-local poly = new_poly()
+local shape = {
+  poly = new_poly()
+}
 
 function love.load(args)
   love.graphics.setBackgroundColor(250,250,250)
@@ -9,53 +13,60 @@ function love.load(args)
 end
 
 function love.mousepressed(x, y, button)
-  if button == 'l' and not poly:is_closed() then
-    poly:push_coord(x, y)
+  if button == 'l' and shape.is_cw_winding == nil then
+    shape.poly:push_coord(x, y)
   elseif button == 'r' then
-    poly:close();
+    shape.poly:close()
+    shape.is_convex = shape.poly:is_convex()
+    shape.is_cw_winding = shape.poly:is_cw()
+    shape.triangles = shape.poly:get_triangles()
   end
 end
 
 function love.keypressed(key, isrepeat)
   if key == "backspace" or key == "delete" then
-     poly:pop_coord()
+    shape.poly:pop_coord()
+    shape.is_convex = nil
+    shape.is_cw_winding = nil
+    shape.triangles = nil
   end
 end
-
-local msg = ""
 
 function love.update(dt)
-  if poly:get_coord_count() < 3 then
+  if shape.is_cw_winding == nil then
     msg = "Add points (left click)"
-  elseif poly:is_closed() then
-    msg = poly:is_convex() and "Convex polygon" or "Concave polygon"
-    msg = msg .. (poly:is_cw() and " (clockwise)" or " (counterclockwise)")
+    if shape.poly:get_coord_count() > 2 then
+      msg = msg .. " or close the polygon (right click to close)"
+    end
   else
-    msg = "Add points (left click) or close the polygon (right click to close)"
+    msg = shape.is_convex and "Convex polygon" or "Concave polygon"
+    msg = msg .. (shape.is_cw_winding and " (clockwise winding)" or " (counterclockwise winding)")
   end
 end
 
+local color_components = to_circular_table{255,0,0, 125, 125, 0, 80, 175, 0}
+
 function love.draw()
-  local nb_coord = poly:get_coord_count()
-  if nb_coord > 1 then
-    local triangles = poly:get_triangles()
-    if triangles then
-      local color = {love.graphics.getColor()}
-      local color_component = to_circular_array{100,50,200,45,67,125,34,230,80,0,150}
-      local color_index=1
-      for i = 1,#triangles,3 do
-        love.graphics.setColor(color_component[color_index], color_component[color_index+1], color_component[color_index+2], 30)
-        color_index = color_index + 1
-        local x1, y1 = poly:get_coord(triangles[i])
-        local x2, y2 = poly:get_coord(triangles[i+1])
-        local x3, y3 = poly:get_coord(triangles[i+2])
-        love.graphics.polygon("fill", x1, y1, x2, y2, x3, y3)
-      end
-      love.graphics.setColor(color)
+
+  if shape.triangles then
+    local color = {love.graphics.getColor()}
+    local color_index=1
+    for i = 1,#shape.triangles,3 do
+      love.graphics.setColor(color_components[color_index], color_components[color_index+1], color_components[color_index+2], 150)
+      color_index = color_index + 1
+      local x1, y1 = shape.poly:get_coord(shape.triangles[i])
+      local x2, y2 = shape.poly:get_coord(shape.triangles[i+1])
+      local x3, y3 = shape.poly:get_coord(shape.triangles[i+2])
+      love.graphics.polygon("fill", x1, y1, x2, y2, x3, y3)
     end
-    love.graphics.line(poly)
-  elseif nb_coord == 1 then
-    love.graphics.point(poly:get_coord(1))
+    love.graphics.setColor(color)
+  end
+
+  local coord_count = shape.poly:get_coord_count()
+  if coord_count == 1 then
+    love.graphics.point(shape.poly:get_coord(1))
+  elseif coord_count > 1 then
+    love.graphics.line(shape.poly)
   end
 
   love.graphics.print(msg, 10, 10)

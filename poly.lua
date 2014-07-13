@@ -28,22 +28,6 @@ function PolyIndex.new(init_size)
   return setmetatable(poly_index, PolyIndex)
 end
 
-local CircularArray = {}
-
-function CircularArray.__index (array, key)
-  if type(key) == "number" then
-    local length = #array
-    return rawget(array,  normalize_index(key, length))
-  else
-    return rawget(array, key)
-  end
-end
-
-function to_circular_array(a)
-  assert(type(a) == "table", "table expected")
-  return setmetatable(a, CircularArray)
-end
-
 local PolyMetaTable = {}
 PolyMetaTable.__index = PolyMetaTable
 
@@ -215,7 +199,7 @@ function PolyMetaTable.get_triangles(poly)
           end
         else
           -- remove ear if no more an ear
-          for i,j in pairs(ear_tips) do
+          for i,j in ipairs(ear_tips) do
             if j == index then
               table.remove(ear_tips, i)
               break
@@ -226,72 +210,6 @@ function PolyMetaTable.get_triangles(poly)
     end
   end
   return triangles_vertices
-end
-
-
-function PolyMetaTable.get_convex(poly)
-  if not poly:is_closed() then
-    return nil
-  end
-  
-  local polySurface = 0
-  local angleSigns = {0}
-  for i = 1,(#poly-3),2 do
-    local n = i
-    local x1, y1 = poly[n], poly[n+1]
-    n = n + 2
-    local x2, y2 = poly[n], poly[n+1]
-    n = n + 2 < #poly and n + 2 or 3
-    local x3, y3 = poly[n], poly[n+1]
-    -- dot product of the z component
-    local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    table.insert(angleSigns, z)
-    polySurface = polySurface + (x2 - x1) * (y2 + y1)
-  end
-  angleSigns[1] = angleSigns[#angleSigns]
-  table.remove(angleSigns)
-  
-  local sign = polySurface < 0 and -1 or 1
-  
-  local starting_point = nil
-  for i,s in pairs(angleSigns) do
-    if s * sign < 0 then
-      starting_point = i
-      break
-    end
-  end
-
-  if starting_point == nil then
-    return poly
-  end
-  
-  local j = starting_point
-  j = (j % #angleSigns) + 1
-  
-  local x2, y2 = poly:get_coord(starting_point)
-  local x3, y3 = poly:get_coord(j)
-  local convex_poly = {x2,y2,x3,y3}
-
-  while j~=pivot do
-    j = (j % #angleSigns) + 1
-    local x1, y1 = poly:get_coord(j)
-    
-    -- dot product of the z component
-    local z = (x1 - x2) * (y3 - y2) - (y1 - y2) * (x3 - x2)
-    if z * sign >= 0 then
-      table.insert(convex_poly, x1)
-      table.insert(convex_poly, y1)
-    else
-      break
-    end
-    if angleSigns[j] * sign < 0 then
-      break
-    end
-  end
-
-  setmetatable(convex_poly, PolyMetaTable)
-  convex_poly:close()
-  return convex_poly:is_closed() and convex_poly or nil
 end
 
 function PolyMetaTable.get_coord_count(poly)
