@@ -30,13 +30,6 @@ end
 local PolyMetaTable = {}
 PolyMetaTable.__index = PolyMetaTable
 
-function PolyMetaTable.clone(poly)
-  local target = {}
-  for k, v in pairs(poly) do target[k] = v end
-  setmetatable(target, getmetatable(poly))
-  return target
-end
-
 function PolyMetaTable.is_closed(poly)
   local nb = #poly
   return nb >=6 and poly[1] == poly[nb-1] and poly[2] == poly[nb]
