@@ -182,10 +182,12 @@ function PolyMetaTable.get_triangles(poly)
           end
         end
         if is_ear then
-          if index == previous_ear_index then
-            table.insert(ear_tips, 1, index)
-          else
-            table.insert(ear_tips, index)
+          if not table.contains(ear_tips, index) then
+            if index == previous_ear_index then
+              table.insert(ear_tips, 1, index)
+            else
+              table.insert(ear_tips, index)
+            end
           end
         else
           -- remove ear if no more an ear
@@ -200,6 +202,13 @@ function PolyMetaTable.get_triangles(poly)
     end
   end
   return triangles
+end
+
+function table.contains(t, v)
+  for _,i in ipairs(t) do
+    if i == v then return true end
+  end
+  return false
 end
 
 function PolyMetaTable.get_coord_count(poly)

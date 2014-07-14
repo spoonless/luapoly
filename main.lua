@@ -20,6 +20,10 @@ function love.mousepressed(x, y, button)
     shape.is_convex = shape.poly:is_convex()
     shape.is_cw_winding = shape.poly:is_cw()
     shape.triangles = shape.poly:get_triangles()
+    print("triangulation of (".. table.concat(shape.poly, ",")..")")
+    for _,triangle in ipairs(shape.triangles) do
+      print("("..table.concat(triangle,",")..")")
+    end
   end
 end
 
