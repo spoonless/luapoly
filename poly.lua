@@ -62,10 +62,7 @@ function PolyMetaTable.is_cw(poly)
 
   local sum = 0
   for i = 1,(poly:get_coord_count()-1) do
-    local x1, y1 = poly:get_coord(i)
-    local x2, y2 = poly:get_coord(i+1)
-
-    sum = sum + (x2 - x1) * (y2 + y1)
+    sum = sum + poly:compute_subsurface(i, i+1)
   end
   return sum >= 0
 end
@@ -85,10 +82,6 @@ function PolyMetaTable.compute_zcross_product(poly, i1, i2, i3)
 end
 
 function PolyMetaTable.compute_subsurface(poly, i1, i2)
-  local coord_count = poly:get_coord_count() - 1
-  i1 = normalize_index(i1, coord_count)
-  i2 = normalize_index(i2, coord_count)
-  
   local x1, y1 = poly:get_coord(i1)
   local x2, y2 = poly:get_coord(i2)
   
