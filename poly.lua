@@ -13,6 +13,14 @@ function PolyIndex:next(index)
   return self.next_index[index] or normalize_index(index+1, self.chain_size)
 end
 
+function PolyIndex:get_triangle(index, revert)
+  if revert then
+    return {self:next(index), normalize_index(index, self.chain_size), self:previous(index)}
+  else
+    return {self:previous(index), normalize_index(index, self.chain_size), self:next(index)}
+  end
+end
+
 function PolyIndex:remove(index)
   local n = self:next(index)
   local p = self:previous(index)
@@ -84,6 +92,20 @@ function PolyMetaTable.compute_subsurface(poly, i1, i2)
   return (x2 - x1) * (y2 + y1)
 end
 
+local function check_ear(poly, triangle, reflex_vertices)
+  for j,_ in pairs(reflex_vertices) do
+    -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
+    -- check j is not inside the triangle (i-1, i, i+1)
+    -- to be checked
+    if poly:compute_zcross_product(j, triangle[2], triangle[3]) > 0
+      and poly:compute_zcross_product(j, triangle[3], triangle[1]) > 0
+      and poly:compute_zcross_product(j, triangle[1], triangle[2]) > 0 then
+      return false
+    end
+  end
+  return true
+end
+
 function PolyMetaTable.get_triangles(poly)
   if not poly:is_closed() then
     return nil
@@ -121,27 +143,13 @@ function PolyMetaTable.get_triangles(poly)
   -- second phase : identify ears
   local ear_tips = {}
   for i,_ in pairs(convex_vertices) do
-    local is_ear = true
-    for j,_ in pairs(reflex_vertices) do
-      -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
-      -- check j is not inside the triangle (i-1, i, i+1)
-      -- to be checked
-      local next_i = poly_index:next(i)
-      local previous_i = poly_index:previous(i)
-      if sign * poly:compute_zcross_product(j, i, next_i) > 0
-         and sign * poly:compute_zcross_product(j, next_i, previous_i) > 0
-         and sign * poly:compute_zcross_product(j, previous_i, i) > 0 then
-         is_ear = false
-         break;
-      end
-    end
-    if is_ear then
+    if check_ear(poly, poly_index:get_triangle(i, sign < 0), reflex_vertices) then
       table.insert(ear_tips, i)
       convex_vertices[i] = #ear_tips
     end
   end
   
-  triangles = {}
+  local triangles = {}
   
   -- third phase : extract triangles
   local ear_tips_index = 0
@@ -150,39 +158,22 @@ function PolyMetaTable.get_triangles(poly)
     local ear_index = ear_tips[ear_tips_index]
     convex_vertices[ear_index] = nil
     
-    local previous_ear_index = poly_index:previous(ear_index)
-    local next_ear_index = poly_index:next(ear_index)
+    local triangle = poly_index:get_triangle(ear_index, sign < 0)
     
-    table.insert(triangles, {previous_ear_index, ear_index, next_ear_index})
+    table.insert(triangles, triangle)
     
     poly_index:remove(ear_index)
     
-    for _,index in ipairs{previous_ear_index, next_ear_index} do
-      local previous_index = poly_index:previous(index)
-      local next_index = poly_index:next(index)
-      if reflex_vertices[index] 
-        and sign * poly:compute_zcross_product(previous_index, index, next_index) >= 0 then
+    for pos,index in ipairs(triangle,2) do
+      triangle = poly_index:get_triangle(index, sign < 0)
+      if reflex_vertices[index] and poly:compute_zcross_product(triangle[1], triangle[2], triangle[3]) >= 0 then
         reflex_vertices[index] = nil
         convex_vertices[index] = 0
       end
       if convex_vertices[index] then
-        local is_ear = true
-        for j,_ in pairs(reflex_vertices) do
-          -- compute zcross_product for j and each edges of the triangle (i-1, i, i+1)
-          -- check j is not inside the triangle (i-1, i, i+1)
-          -- to be checked
-          local next_i = poly_index:next(index)
-          local previous_i = poly_index:previous(index)
-          if sign * poly:compute_zcross_product(j, index, next_i) > 0
-            and sign * poly:compute_zcross_product(j, next_i, previous_i) > 0
-            and sign * poly:compute_zcross_product(j, previous_i, index) > 0 then
-            is_ear = false
-            break;
-          end
-        end
-        if is_ear then
+        if check_ear(poly, triangle, reflex_vertices) then
           if convex_vertices[index] == 0 then
-            if index == previous_ear_index then
+            if pos == 1 then
               ear_tips[ear_tips_index] = index
               convex_vertices[index] = ear_tips_index
               ear_tips_index = ear_tips_index - 1
@@ -191,7 +182,7 @@ function PolyMetaTable.get_triangles(poly)
               convex_vertices[index] = #ear_tips
             end
           end
-        elseif convex_vertices[index] then
+        else
           -- remove ear if no more an ear
           table.remove(ear_tips, convex_vertices[index])
           convex_vertices[index] = 0

@@ -150,4 +150,11 @@ function TestPolyIndex:test_poly_index()
   assert_equals(poly_index:next(5), 2)
 end
 
+function TestPolyIndex:test_get_triangle()
+  poly_index = PolyIndex.new(5)
+
+  assert_equals(poly_index:get_triangle(1), {5,1,2})
+  assert_equals(poly_index:get_triangle(-1), {3,4,5})
+end
+
 LuaUnit:run()
