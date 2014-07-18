@@ -148,14 +148,20 @@ function PolyMetaTable.get_triangles(poly)
       convex_vertices[i] = #ear_tips
     end
   end
-  
+
   local triangles = {}
   
   -- third phase : extract triangles
   local ear_tips_index = 0
-  while #triangles < coord_count - 2 do
-    ear_tips_index = ear_tips_index + 1
-    local ear_index = ear_tips[ear_tips_index]
+  for i = 1,(coord_count - 2) do
+    local ear_index
+    if i % 2 == 1 then
+      ear_tips_index = ear_tips_index + 1
+      ear_index = ear_tips[ear_tips_index]
+    else
+      ear_index = ear_tips[#ear_tips]
+      table.remove(ear_tips)
+    end
     convex_vertices[ear_index] = nil
     
     local triangle = poly_index:get_triangle(ear_index, sign < 0)
@@ -163,8 +169,8 @@ function PolyMetaTable.get_triangles(poly)
     table.insert(triangles, triangle)
     
     poly_index:remove(ear_index)
-    
-    for pos,index in ipairs(triangle,2) do
+
+    for pos,index in ipairs{triangle[1],triangle[3]} do
       triangle = poly_index:get_triangle(index, sign < 0)
       if reflex_vertices[index] and poly:compute_zcross_product(triangle[1], triangle[2], triangle[3]) >= 0 then
         reflex_vertices[index] = nil
@@ -182,8 +188,10 @@ function PolyMetaTable.get_triangles(poly)
               convex_vertices[index] = #ear_tips
             end
           end
-        else
-          -- remove ear if no more an ear
+        elseif convex_vertices[index] > 0 then
+          for i,j in pairs(convex_vertices) do
+            if j > convex_vertices[index] then convex_vertices[i] = j-1 end
+          end
           table.remove(ear_tips, convex_vertices[index])
           convex_vertices[index] = 0
         end
