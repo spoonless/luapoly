@@ -41,16 +41,18 @@ function PolyMetaTable.is_convex(poly)
     return false
   end
 
+  local coord_count = poly:get_coord_count() - 1
+  local prev_i = coord_count
   local zsign = 0
-  for i = 1,(poly:get_coord_count()-1) do
+  for i = 1,coord_count do
     -- dot product of the z component
-    local z = poly:compute_zcross_product(i, i+1, i+2)
-
+    local z = poly:compute_zcross_product(prev_i, i, i+1)
     if zsign == 0 then
       zsign = z
     elseif zsign * z < 0 then
       return false
     end
+    prev_i = i
   end
   return true
 end
@@ -68,12 +70,6 @@ function PolyMetaTable.is_cw(poly)
 end
 
 function PolyMetaTable.compute_zcross_product(poly, i1, i2, i3)
-  local coord_count = poly:get_coord_count() - 1
-  
-  i1 = normalize_index(i1, coord_count)
-  i2 = normalize_index(i2, coord_count)
-  i3 = normalize_index(i3, coord_count)
-  
   local x1, y1 = poly:get_coord(i1)
   local x2, y2 = poly:get_coord(i2)
   local x3, y3 = poly:get_coord(i3)
@@ -98,15 +94,21 @@ function PolyMetaTable.get_triangles(poly)
   local reflex_vertices = {}
   local convex_vertices = {}
   local coord_count = poly:get_coord_count() - 1
+
+  -- first phase :
+  -- 1) separate reflex and convex vertices.
+  -- 2) compute polygon surface to determine vertex chain winding.
+  local prev_i = coord_count
   for i = 1,coord_count do
     -- dot product of the z component
-    local z = poly:compute_zcross_product(i, i+1, i+2)
+    local z = poly:compute_zcross_product(prev_i, i, i+1)
     if z < 0 then
-      reflex_vertices[normalize_index(i+1, coord_count)] = true
+      reflex_vertices[i] = true
     else
-      convex_vertices[normalize_index(i+1, coord_count)] = true
+      convex_vertices[i] = -1
     end
     polySurface = polySurface + poly:compute_subsurface(i, i+1)
+    prev_i = i
   end
   
   local sign = polySurface < 0 and -1 or 1
@@ -138,7 +140,7 @@ function PolyMetaTable.get_triangles(poly)
   end
   
   triangles = {}
-
+  
   while #triangles < coord_count - 2 do
     local ear_index = ear_tips[1]
     table.remove(ear_tips, 1)
