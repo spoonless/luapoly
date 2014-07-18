@@ -103,9 +103,9 @@ function PolyMetaTable.get_triangles(poly)
     -- dot product of the z component
     local z = poly:compute_zcross_product(prev_i, i, i+1)
     if z < 0 then
-      reflex_vertices[i] = true
+      reflex_vertices[i] = 0
     else
-      convex_vertices[i] = -1
+      convex_vertices[i] = 0
     end
     polySurface = polySurface + poly:compute_subsurface(i, i+1)
     prev_i = i
@@ -118,6 +118,7 @@ function PolyMetaTable.get_triangles(poly)
     reflex_vertices, convex_vertices = convex_vertices, reflex_vertices
   end
   
+  -- second phase : identify ears
   local ear_tips = {}
   for i,_ in pairs(convex_vertices) do
     local is_ear = true
@@ -136,14 +137,17 @@ function PolyMetaTable.get_triangles(poly)
     end
     if is_ear then
       table.insert(ear_tips, i)
+      convex_vertices[i] = #ear_tips
     end
   end
   
   triangles = {}
   
+  -- third phase : extract triangles
+  local ear_tips_index = 0
   while #triangles < coord_count - 2 do
-    local ear_index = ear_tips[1]
-    table.remove(ear_tips, 1)
+    ear_tips_index = ear_tips_index + 1
+    local ear_index = ear_tips[ear_tips_index]
     convex_vertices[ear_index] = nil
     
     local previous_ear_index = poly_index:previous(ear_index)
@@ -159,7 +163,7 @@ function PolyMetaTable.get_triangles(poly)
       if reflex_vertices[index] 
         and sign * poly:compute_zcross_product(previous_index, index, next_index) >= 0 then
         reflex_vertices[index] = nil
-        convex_vertices[index] = true
+        convex_vertices[index] = 0
       end
       if convex_vertices[index] then
         local is_ear = true
@@ -177,33 +181,25 @@ function PolyMetaTable.get_triangles(poly)
           end
         end
         if is_ear then
-          if not table.contains(ear_tips, index) then
+          if convex_vertices[index] == 0 then
             if index == previous_ear_index then
-              table.insert(ear_tips, 1, index)
+              ear_tips[ear_tips_index] = index
+              convex_vertices[index] = ear_tips_index
+              ear_tips_index = ear_tips_index - 1
             else
               table.insert(ear_tips, index)
+              convex_vertices[index] = #ear_tips
             end
           end
-        else
+        elseif convex_vertices[index] then
           -- remove ear if no more an ear
-          for i,j in ipairs(ear_tips) do
-            if j == index then
-              table.remove(ear_tips, i)
-              break
-            end
-          end
+          table.remove(ear_tips, convex_vertices[index])
+          convex_vertices[index] = 0
         end
       end
     end
   end
   return triangles
-end
-
-function table.contains(t, v)
-  for _,i in ipairs(t) do
-    if i == v then return true end
-  end
-  return false
 end
 
 function PolyMetaTable.get_coord_count(poly)
