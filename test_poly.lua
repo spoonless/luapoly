@@ -84,7 +84,7 @@ function TestPoly:test_get_triangles_when_poly_is_convex()
   poly:close()
   
   local triangles = poly:get_triangles()
-  assert_equals(triangles, {{4,1,2},{4,2,3}})
+  assert_equals(triangles, {{4,1,2},{3,4,2}})
 end
 
 function TestPoly:test_get_triangles_when_poly_is_concave()
@@ -96,7 +96,7 @@ function TestPoly:test_get_triangles_when_poly_is_concave()
   poly:close()
   
   local triangles = poly:get_triangles()
-  assert_equals(triangles, {{4,1,2},{3,4,2}})
+  assert_equals(triangles, {{4,1,2},{4,2,3}})
 end
 
 function TestPoly:test_get_triangles_when_poly_is_star()
@@ -112,49 +112,49 @@ function TestPoly:test_get_triangles_when_poly_is_star()
   poly:close()
   
   local triangles = poly:get_triangles()
-  assert_equals(triangles, {{3,4,5},{2,3,5},{7,8,1},{6,7,1},{5,6,1},{1,2,5}})
+  assert_equals(triangles, {{3,4,5},{3,5,6},{2,3,6},{1,2,6},{7,8,1},{7,1,6}})
 end
 
-TestPolyIndex = {}
+TestIndexedPoly = {}
 
-function TestPolyIndex:test_poly_index()
-  poly_index = PolyIndex.new(5)
+function TestIndexedPoly:test_indexed_poly()
+  indexed_poly = IndexedPoly.new(5)
 
-  assert_equals(poly_index:previous(1), 5)
-  assert_equals(poly_index:next(1), 2)
+  assert_equals(indexed_poly:previous(1), 5)
+  assert_equals(indexed_poly:next(1), 2)
 
-  assert_equals(poly_index:previous(2), 1)
-  assert_equals(poly_index:next(2), 3)
+  assert_equals(indexed_poly:previous(2), 1)
+  assert_equals(indexed_poly:next(2), 3)
 
-  assert_equals(poly_index:previous(3), 2)
-  assert_equals(poly_index:next(3), 4)
+  assert_equals(indexed_poly:previous(3), 2)
+  assert_equals(indexed_poly:next(3), 4)
 
-  assert_equals(poly_index:previous(4), 3)
-  assert_equals(poly_index:next(4), 5)
+  assert_equals(indexed_poly:previous(4), 3)
+  assert_equals(indexed_poly:next(4), 5)
 
-  assert_equals(poly_index:previous(5), 4)
-  assert_equals(poly_index:next(5), 1)
+  assert_equals(indexed_poly:previous(5), 4)
+  assert_equals(indexed_poly:next(5), 1)
 
-  poly_index:remove(1)
+  indexed_poly:remove(1)
 
-  assert_equals(poly_index:previous(2), 5)
-  assert_equals(poly_index:next(2), 3)
+  assert_equals(indexed_poly:previous(2), 5)
+  assert_equals(indexed_poly:next(2), 3)
 
-  assert_equals(poly_index:previous(3), 2)
-  assert_equals(poly_index:next(3), 4)
+  assert_equals(indexed_poly:previous(3), 2)
+  assert_equals(indexed_poly:next(3), 4)
 
-  assert_equals(poly_index:previous(4), 3)
-  assert_equals(poly_index:next(4), 5)
+  assert_equals(indexed_poly:previous(4), 3)
+  assert_equals(indexed_poly:next(4), 5)
 
-  assert_equals(poly_index:previous(5), 4)
-  assert_equals(poly_index:next(5), 2)
+  assert_equals(indexed_poly:previous(5), 4)
+  assert_equals(indexed_poly:next(5), 2)
 end
 
-function TestPolyIndex:test_get_triangle()
-  poly_index = PolyIndex.new(5)
+function TestIndexedPoly:test_get_triangle()
+  indexed_poly = IndexedPoly.new(5)
 
-  assert_equals(poly_index:get_triangle(1), {5,1,2})
-  assert_equals(poly_index:get_triangle(-1), {3,4,5})
+  assert_equals(indexed_poly:get_triangle(1), {5,1,2})
+  assert_equals(indexed_poly:get_triangle(-1), {3,4,5})
 end
 
 LuaUnit:run()
