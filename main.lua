@@ -35,7 +35,8 @@ function love.mousepressed(x, y, button)
   if button == 'l' and shape.is_cw_winding == nil then
     shape.poly:push_coord(x, y)
   elseif button == 'r' then
-    if shape.poly:close() then
+    shape.poly:close()
+    if shape.poly:is_closed() then
       shape.is_convex = shape.poly:is_convex()
       shape.is_cw_winding = shape.poly:is_cw()
       shape.triangles = shape.poly:get_triangles()
