@@ -65,6 +65,14 @@ function Polygon.is_convex(poly)
   return true
 end
 
+function Polygon.revert_winding(poly)
+  local last = poly:is_closed() and #poly-2 or #poly
+  for i = 1,(last-2)/2,2 do
+    poly[i+2],poly[last - i] = poly[last - i],poly[i+2]
+    poly[i+3],poly[last - i+1] = poly[last - i+1],poly[i+3]
+  end
+end
+
 function Polygon.is_cw(poly)
   if not poly:is_closed() then
     return false

@@ -20,6 +20,25 @@ function TestPoly:test_push_pop_coord()
   assert_equals(poly, {})
 end
 
+function TestPoly:test_revert_winding()
+  poly = new_poly{0,0,1,1,1,0,0,0}
+  
+  assert(poly:is_cw())
+  
+  poly:revert_winding()
+  
+  --assert(not poly:is_cw())
+  assert_equals(poly, {0,0,1,0,1,1,0,0})
+end
+
+function TestPoly:test_revert_winding_when_poly_not_closed()
+  poly = new_poly{0,0,1,1,1,0}
+  
+  poly:revert_winding()
+  
+  assert_equals(poly, {0,0,1,0,1,1})
+end
+
 function TestPoly:test_close_poly()
   poly = new_poly{0,0,1,0,1,1}
   
