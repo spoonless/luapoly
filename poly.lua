@@ -225,7 +225,9 @@ function Polygon.close(poly)
   if #poly >= 6 and not poly:is_closed() then
     table.insert(poly, poly[1])
     table.insert(poly, poly[2])
+    return true
   end
+  return false
 end
 
 return function(vertices_chain)

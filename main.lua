@@ -35,13 +35,14 @@ function love.mousepressed(x, y, button)
   if button == 'l' and shape.is_cw_winding == nil then
     shape.poly:push_coord(x, y)
   elseif button == 'r' then
-    shape.poly:close()
-    shape.is_convex = shape.poly:is_convex()
-    shape.is_cw_winding = shape.poly:is_cw()
-    shape.triangles = shape.poly:get_triangles()
-    print("triangulation of (".. table.concat(shape.poly, ",")..")")
-    for _,triangle in ipairs(shape.triangles) do
-      print("("..table.concat(triangle,",")..")")
+    if shape.poly:close() then
+      shape.is_convex = shape.poly:is_convex()
+      shape.is_cw_winding = shape.poly:is_cw()
+      shape.triangles = shape.poly:get_triangles()
+      print("triangulation of (".. table.concat(shape.poly, ",")..")")
+      for _,triangle in ipairs(shape.triangles) do
+        print("("..table.concat(triangle,",")..")")
+      end
     end
   end
 end
