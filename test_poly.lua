@@ -4,11 +4,24 @@ local new_poly = require "poly"
 
 TestPoly = {}
 
+function TestPoly:test_push_pop_coord()
+  poly = new_poly()
+  
+  poly:push_coord(1,2)
+  
+  assert_equals(poly:get_coord_count(), 1)
+  assert_equals(poly, {1,2})
+  
+  x, y = poly:get_coord(1)
+  assert_equals(x, 1)
+  assert_equals(y, 2)
+  
+  poly:pop_coord()
+  assert_equals(poly, {})
+end
+
 function TestPoly:test_close_poly()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,0)
-  poly:push_coord(1,1)
+  poly = new_poly{0,0,1,0,1,1}
   
   assert(not poly:is_closed())
 
@@ -18,10 +31,7 @@ function TestPoly:test_close_poly()
 end
 
 function TestPoly:test_is_convex()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,0)
-  poly:push_coord(1,1)
+  poly = new_poly{0,0,1,0,1,1}
   
   assert(not poly:is_convex())
 
@@ -31,11 +41,7 @@ function TestPoly:test_is_convex()
 end
 
 function TestPoly:test_is_not_convex()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,0)
-  poly:push_coord(1,1)
-  poly:push_coord(0.6,0.5)
+  poly = new_poly{0,0,1,0,1,1,.6,.5}
   
   assert(not poly:is_convex())
 
@@ -45,30 +51,21 @@ function TestPoly:test_is_not_convex()
 end
 
 function TestPoly:test_is_cw()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
+  poly = new_poly{0,0,1,1,1,0}
   poly:close()
   
   assert(poly:is_cw())
 end
 
 function TestPoly:test_is_ccw()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,0)
-  poly:push_coord(1,1)
+  poly = new_poly{0,0,1,0,1,1}
   poly:close()
   
   assert(not poly:is_cw())
 end
 
 function TestPoly:test_get_triangles_when_poly_is_triangle()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
+  poly = new_poly{0,0,1,1,1,0}
   poly:close()
   
   local triangles = poly:get_triangles()
@@ -76,11 +73,7 @@ function TestPoly:test_get_triangles_when_poly_is_triangle()
 end
 
 function TestPoly:test_get_triangles_when_poly_is_convex()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(0,1)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
+  poly = new_poly{0,0,0,1,1,1,1,0}
   poly:close()
   
   local triangles = poly:get_triangles()
@@ -88,11 +81,7 @@ function TestPoly:test_get_triangles_when_poly_is_convex()
 end
 
 function TestPoly:test_get_triangles_when_poly_is_concave()
-  poly = new_poly();
-  poly:push_coord(0,0)
-  poly:push_coord(0.5,0.2)
-  poly:push_coord(1,1)
-  poly:push_coord(1,0)
+  poly = new_poly{0,0,.5,.2,1,1,1,0}
   poly:close()
   
   local triangles = poly:get_triangles()
@@ -100,15 +89,7 @@ function TestPoly:test_get_triangles_when_poly_is_concave()
 end
 
 function TestPoly:test_get_triangles_when_poly_is_star()
-  poly = new_poly();
-  poly:push_coord(-0.5,0.5)
-  poly:push_coord(0,5)
-  poly:push_coord(0.5,0.5)
-  poly:push_coord(5,0)
-  poly:push_coord(0.5,-0.5)
-  poly:push_coord(0,-5)
-  poly:push_coord(-0.5,-0.5)
-  poly:push_coord(-5,0)
+  poly = new_poly{-.5,.5,0,5,.5,.5,5,0,.5,-.5,0,-5,-.5,-.5,-5,0}
   poly:close()
   
   local triangles = poly:get_triangles()

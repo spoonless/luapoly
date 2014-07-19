@@ -228,6 +228,6 @@ function Polygon.close(poly)
   end
 end
 
-return function()
-  return setmetatable({}, Polygon)
+return function(vertices_chain)
+  return setmetatable(vertices_chain and vertices_chain or {}, Polygon)
 end

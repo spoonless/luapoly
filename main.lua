@@ -3,13 +3,32 @@ local new_poly = require "poly"
 
 local msg = ""
 
-local shape = {
-  poly = new_poly()
-}
+local shape = {}
+
+local function parse_args(args)
+  local vertices_chain={}
+  if args[2] then
+    local f = io.open(args[2])
+    if io.type(f) == "file" then
+      for line in f:lines() do
+        for t in string.gmatch(line, "([%d%.]+)[,%w]?") do
+          table.insert(vertices_chain, tonumber(t))
+        end
+      end
+      f:close()
+    else
+      for t in string.gmatch(args[2], "([%d%.]+)[,]?") do
+        table.insert(vertices_chain, tonumber(t))
+      end
+    end
+  end
+  return vertices_chain
+end
 
 function love.load(args)
   love.graphics.setBackgroundColor(250,250,250)
   love.graphics.setColor(60,60,60)
+  shape.poly = new_poly(parse_args(args))
 end
 
 function love.mousepressed(x, y, button)
