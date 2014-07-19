@@ -27,7 +27,7 @@ function TestPoly:test_revert_winding()
   
   poly:revert_winding()
   
-  --assert(not poly:is_cw())
+  assert(not poly:is_cw())
   assert_equals(poly, {0,0,1,0,1,1,0,0})
 end
 
