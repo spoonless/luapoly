@@ -133,9 +133,9 @@ function Polygon.get_triangles(poly)
     -- dot product of the z component
     local z = poly:compute_zcross_product(prev_i, i, i+1)
     if z < 0 then
-      reflex_vertices[i] = 0
+      reflex_vertices[i] = ""
     else
-      convex_vertices[i] = 0
+      convex_vertices[i] = ""
     end
     poly_surface = poly_surface + poly:compute_subsurface(i, i+1)
     prev_i = i
@@ -153,19 +153,18 @@ function Polygon.get_triangles(poly)
   for i,_ in pairs(convex_vertices) do
     if check_ear(poly, indexed_poly:get_triangle(i, sign < 0), reflex_vertices) then
       table.insert(ear_tips, i)
-      convex_vertices[i] = #ear_tips
+      convex_vertices[i] = "ear"
     end
   end
 
   local triangles = {}
   
   -- third phase : extract triangles
-  local ear_tips_index = 0
   for i = 1,(coord_count - 2) do
     local ear_index
     if i % 2 == 1 then
-      ear_tips_index = ear_tips_index + 1
-      ear_index = ear_tips[ear_tips_index]
+      ear_index = ear_tips[1]
+      table.remove(ear_tips, 1)
     else
       ear_index = ear_tips[#ear_tips]
       table.remove(ear_tips)
@@ -177,31 +176,27 @@ function Polygon.get_triangles(poly)
     table.insert(triangles, triangle)
     
     indexed_poly:remove(ear_index)
-
+    
     for pos,index in ipairs{triangle[1],triangle[3]} do
       triangle = indexed_poly:get_triangle(index, sign < 0)
       if reflex_vertices[index] and poly:compute_zcross_product(triangle[1], triangle[2], triangle[3]) >= 0 then
         reflex_vertices[index] = nil
-        convex_vertices[index] = 0
+        convex_vertices[index] = ""
       end
       if convex_vertices[index] then
         if check_ear(poly, triangle, reflex_vertices) then
-          if convex_vertices[index] == 0 then
-            if pos == 1 then
-              ear_tips[ear_tips_index] = index
-              convex_vertices[index] = ear_tips_index
-              ear_tips_index = ear_tips_index - 1
-            else
-              table.insert(ear_tips, index)
-              convex_vertices[index] = #ear_tips
+          if convex_vertices[index] == "" then
+            table.insert(ear_tips, (pos == 1 and 1 or #ear_tips), index)
+            convex_vertices[index] = "ear"
+          end
+        elseif convex_vertices[index] == "ear" then
+          for i,j in ipairs(ear_tips) do
+            if j == index then
+              table.remove(ear_tips, i)
+              break
             end
           end
-        elseif convex_vertices[index] > 0 then
-          for i,j in pairs(convex_vertices) do
-            if j > convex_vertices[index] then convex_vertices[i] = j-1 end
-          end
-          table.remove(ear_tips, convex_vertices[index])
-          convex_vertices[index] = 0
+          convex_vertices[index] = ""
         end
       end
     end

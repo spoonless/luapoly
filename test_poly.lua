@@ -104,7 +104,7 @@ function TestPoly:test_get_triangles_when_poly_is_concave()
   poly:close()
   
   local triangles = poly:get_triangles()
-  assert_equals(triangles, {{4,1,2},{4,2,3}})
+  assert_equals(triangles, {{4,1,2},{2,3,4}})
 end
 
 function TestPoly:test_get_triangles_when_poly_is_star()
@@ -112,7 +112,7 @@ function TestPoly:test_get_triangles_when_poly_is_star()
   poly:close()
   
   local triangles = poly:get_triangles()
-  assert_equals(triangles, {{7,8,1},{7,1,2},{6,7,2},{5,6,2},{5,2,3},{5,3,4}})
+  assert_equals(triangles, {{7,8,1},{5,6,7},{4,5,7},{7,1,2},{7,2,3},{3,4,7}})
 end
 
 TestIndexedPoly = {}
