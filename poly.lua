@@ -1,3 +1,9 @@
+--[[
+
+luapoly by David Gayerie
+
+]]--
+
 local function normalize_index(index, max_index)
   return (index - 1) % max_index + 1
 end

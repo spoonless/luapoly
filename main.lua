@@ -1,3 +1,9 @@
+--[[
+
+luapoly by David Gayerie
+
+]]--
+
 require "circular_table"
 local new_poly = require "poly"
 

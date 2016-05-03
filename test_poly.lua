@@ -1,3 +1,8 @@
+--[[
+
+luapoly by David Gayerie
+
+]]--
 
 local LuaUnit = require "luaunit"
 local new_poly = require "poly"

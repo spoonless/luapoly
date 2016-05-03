@@ -1,3 +1,9 @@
+--[[
+
+luapoly by David Gayerie
+
+]]--
+
 function to_circular_table(a)
   assert(type(a) == "table", "table expected")
   return setmetatable(a, {
