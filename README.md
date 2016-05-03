@@ -1,4 +1,4 @@
-**luapoly** is an implementation of the ear clipping method for polygon triangulation.
+**luapoly** is an implementation of the [ear clipping method](https://en.wikipedia.org/wiki/Polygon_triangulation#Ear_clipping_method) for polygon triangulation.
 
 You can draw a polygon by left clicking on the display area to add points. 
 Right clicking creates the last edge of the polygon (from the last point to the first one) and runs the triangulation algorithm.
