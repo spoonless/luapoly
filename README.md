@@ -1,2 +1,22 @@
-# luapoly
-Ear clipping method for polygon triangulation
+**luapoly** is an implementation of the ear clipping method for polygon triangulation.
+
+You can draw a polygon by left clicking on the display area to add points. 
+Right clicking creates the last edge of the polygon (from the last point to the first one) and runs the triangulation algorithm.
+At any time backspace can be used to delete points in the reverse order.
+
+GUI is based on [Löve](https://love2d.org/)
+
+To run **luapoly** (from the project parent directory):
+
+	love luapoly
+
+You pass as argument a file path to load polygon. A polygon file is a text file containing comma separated list of x,y coordinates.
+
+	love luapoly luapoly/samples/poly.poly
+
+To run unit tests (from the project directory):
+
+	lua test_poly.lua
+	lua test_circular_table.lua
+
+**luapoly** is compatible with lua 5.1.
