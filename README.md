@@ -10,7 +10,7 @@ To run **luapoly** (from the project parent directory):
 
 	love luapoly
 
-You pass as argument a file path to load polygon. A polygon file is a text file containing comma separated list of x,y coordinates.
+If you like, you can pass as argument a file path to load a polygon. A polygon file is a text file containing comma separated list of x,y coordinates.
 
 	love luapoly luapoly/samples/poly.poly
 
