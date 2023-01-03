@@ -32,15 +32,16 @@ local function parse_args(args)
 end
 
 function love.load(args)
+  love.window.setTitle("LuaPoly")
   love.graphics.setBackgroundColor(250,250,250)
   love.graphics.setColor(60,60,60)
   shape.poly = new_poly(parse_args(args))
 end
 
 function love.mousepressed(x, y, button)
-  if button == 'l' and shape.is_cw_winding == nil then
+  if button == 1 and shape.is_cw_winding == nil then
     shape.poly:push_coord(x, y)
-  elseif button == 'r' then
+  elseif button == 2 then
     shape.poly:close()
     if shape.poly:is_closed() then
       shape.is_convex = shape.poly:is_convex()
@@ -78,9 +79,8 @@ end
 local color_components = to_circular_table{255,0,0, 125, 125, 0, 80, 175, 0}
 
 function love.draw()
-
+  local color = {love.graphics.getColor()}
   if shape.triangles then
-    local color = {love.graphics.getColor()}
     local color_index=1
     for _,triangle in ipairs(shape.triangles) do
       love.graphics.setColor(color_components[color_index], color_components[color_index+1], color_components[color_index+2], 150)
@@ -90,15 +90,17 @@ function love.draw()
       local x3, y3 = shape.poly:get_coord(triangle[3])
       love.graphics.polygon("fill", x1, y1, x2, y2, x3, y3)
     end
-    love.graphics.setColor(color)
   end
 
+  love.graphics.setColor(0, 0, 0)
   local coord_count = shape.poly:get_coord_count()
+  love.graphics.setPointSize(3)
   if coord_count == 1 then
-    love.graphics.point(shape.poly:get_coord(1))
+    love.graphics.points(shape.poly:get_coord(1))
   elseif coord_count > 1 then
     love.graphics.line(shape.poly)
   end
 
   love.graphics.print(msg, 10, 10)
+  love.graphics.setColor(color)
 end
